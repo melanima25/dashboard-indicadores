@@ -4,18 +4,18 @@ Sistema que importa planilhas semanais de indicadores enviadas por várias unida
 
 > **Aviso: este projeto usa somente dados fictícios.** As unidades ("Unidade Norte", "Unidade Sul"...), os indicadores e todos os números são gerados por um script com semente fixa. Não há dados, nomes ou arquivos de nenhuma instituição, setor ou pessoa real. É um projeto de demonstração para portfólio.
 
-## Status: Semana 2 (importação e regras de consolidação)
+## Status: Semana 3 (tela com filtros, KPIs e pendências)
 
 Feito até aqui:
 
-- **Semana 1:** monorepo (npm workspaces), TypeScript strict, PostgreSQL + Drizzle, gerador de dados fictícios (`npm run seed`), API Hono, página React que lista as unidades e CI no GitHub Actions.
-- **Semana 2:** importação de CSV com validação linha a linha e relatório de erros, reenvio que substitui a semana, prévia sem gravar, consolidação semanal/mensal/anual em SQL, painel de pendências e testes (ver "Regras de consolidação" e "API").
+- **Semana 1:** monorepo (npm workspaces), TypeScript strict, PostgreSQL + Drizzle, gerador de dados fictícios (`npm run seed`), API Hono e CI no GitHub Actions.
+- **Semana 2:** importação de CSV com validação linha a linha e relatório de erros, reenvio que substitui a semana, prévia sem gravar, consolidação semanal/mensal/anual em SQL e painel de pendências (ver "Regras de consolidação" e "API").
+- **Semana 3:** tela com filtros de visão (semanal, mensal, anual), período e unidade; cartões de KPI com variação em relação ao período anterior e indicação de cobertura; painel de pendências. Rotas `/api/kpis` e `/api/periodos`.
 
 Próximos passos:
 
-1. Layout, filtros e cartões de KPI com variação em relação ao período anterior (Semana 3).
-2. Gráficos, tabela, exportação CSV e testes ponta a ponta (Semana 4).
-3. Deploy, screenshots e GIF (Semana 5).
+1. Gráficos (no máximo 3 tipos), tabela consolidada, filtro de indicador, exportação CSV e testes ponta a ponta (Semana 4).
+2. Deploy, screenshots e GIF (Semana 5).
 
 ## Como rodar localmente (Windows com Docker Desktop)
 
@@ -77,6 +77,14 @@ Cada linha é validada e o relatório diz a linha e o campo de cada problema: va
 
 O SQL (`apps/api/src/consolidacao/consultas.ts`) e uma versão em memória (`packages/shared/src/consolidacao.ts`) implementam as mesmas regras, e os testes de integração exigem resultado idêntico em 9 combinações de filtros sobre os dados do seed. Também há um caso calculado à mão (março/2025) e uma comparação do mês/ano do SQL com o do TypeScript em 15 anos de segundas-feiras.
 
+### Variação nos cartões de KPI
+
+- **Soma e média** variam em **%** em relação ao período anterior (semana anterior, mês anterior, ano anterior).
+- **Taxa** varia em **pontos percentuais** (12% para 15% é +3 p.p.): "+25%" sobre um percentual confunde.
+- Sem valor no período anterior, ou anterior igual a zero em soma/média, não há variação (aparece "sem comparação"): nada de infinito nem zero inventado.
+- As setas são neutras de propósito: faltas subindo e atendimentos subindo têm sentidos opostos, e o dashboard não decide o que é bom ou ruim.
+- Cada cartão mostra a **cobertura** ("22 de 24 envios": unidades × semanas). Menos que o esperado vira aviso de período incompleto.
+
 ## API
 
 | Rota                           | O que faz                                                                                                                                                              |
@@ -87,6 +95,8 @@ O SQL (`apps/api/src/consolidacao/consultas.ts`) e uma versão em memória (`pac
 | `POST /api/importacoes/previa` | Valida o CSV e mostra o que aconteceria, **sem gravar**. Aberta.                                                                                                       |
 | `POST /api/importacoes`        | Grava. Exige o header `X-Admin-Key` igual à variável `ADMIN_KEY`; sem ela configurada, devolve 403.                                                                    |
 | `GET /api/consolidado`         | Consolidação. Parâmetros: `granularidade` (semanal, mensal, anual), `agrupar` (rede, unidade), `de`, `ate` (sobre a quinta-feira da semana), `unidadeId`, `indicador`. |
+| `GET /api/periodos`            | Períodos que têm dados (do mais recente ao mais antigo) e o período padrão: o da última semana com dados que já terminou. Parâmetro `granularidade`.                   |
+| `GET /api/kpis`                | Cartões de KPI: valor do período, do período anterior e variação. Parâmetros `granularidade`, `periodo` (ex.: `2025-03`) e `unidadeId`.                                |
 | `GET /api/pendencias`          | Semanas concluídas sem envio e semanas incompletas por unidade. Parâmetros opcionais `de` e `ate`.                                                                     |
 
 Importação válida responde 200; arquivo que não passa na validação responde 422 com o relatório.
@@ -121,7 +131,7 @@ apps/api/            API Hono + Drizzle
   src/importacao/      leitura do arquivo e gravação da importação
   src/consolidacao/    consultas SQL de consolidação
   tests/               testes de integração (Postgres real)
-apps/web/            React + Vite + Tailwind + TanStack Query
+apps/web/            React + Vite + Tailwind + TanStack Query (src/components, src/format.ts)
 packages/shared/     schemas Zod, validação de CSV e regras de consolidação (funções puras)
 exemplos/            CSVs de exemplo para testar a importação
 .github/workflows/   CI

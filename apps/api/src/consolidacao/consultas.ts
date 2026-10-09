@@ -140,3 +140,13 @@ export async function limitesDosDados(
   const row = r.rows[0];
   return row?.primeira && row.ultima ? { primeira: row.primeira, ultima: row.ultima } : null;
 }
+
+/** Períodos que têm ao menos um lançamento, do mais recente para o mais antigo. */
+export async function periodosComDados(db: Db, g: Granularidade): Promise<string[]> {
+  const r = await db.execute<{ periodo: string }>(sql`
+    SELECT DISTINCT ${periodoSql('semana_inicio', g)} AS periodo
+      FROM lancamento_semanal
+     ORDER BY periodo DESC
+  `);
+  return r.rows.map((x) => x.periodo);
+}

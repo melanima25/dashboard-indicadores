@@ -6,6 +6,17 @@ import {
   ConsolidadoQuerySchema,
   ConsolidadoResponseSchema,
   HealthResponseSchema,
+  KpisQuerySchema,
+  KpisResponseSchema,
+  PeriodosQuerySchema,
+  PeriodosResponseSchema,
+  calcularVariacao,
+  limitesDoPeriodo,
+  periodoAnterior,
+  periodoPadrao,
+  periodoValido,
+  type Medida,
+  type ItemConsolidado,
   ImportacaoResponseSchema,
   IndicadoresResponseSchema,
   LIMITE_BYTES,
@@ -21,7 +32,12 @@ import {
 import { schema, type Db } from './db/client';
 import { decodificarCsv, nomeSeguro } from './importacao/decodificar';
 import { carregarIndicadores, processarImportacao } from './importacao/servico';
-import { agregarSql, carregarLancamentos, limitesDosDados } from './consolidacao/consultas';
+import {
+  agregarSql,
+  carregarLancamentos,
+  limitesDosDados,
+  periodosComDados,
+} from './consolidacao/consultas';
 
 export type AppOptions = {
   /** Chave que autoriza gravar importações. Sem ela, só existe a prévia. */
@@ -158,6 +174,102 @@ export function createApp(db: Db, options: AppOptions = {}) {
         granularidade: f.granularidade,
         agrupar: f.agrupar,
         itens,
+      }),
+    );
+  });
+
+  app.get('/api/periodos', async (c) => {
+    const q = PeriodosQuerySchema.safeParse(c.req.query());
+    if (!q.success) return c.json({ erro: 'Granularidade inválida' }, 400);
+    const g = q.data.granularidade;
+    const [periodos, limites] = await Promise.all([periodosComDados(db, g), limitesDosDados(db)]);
+    return c.json(
+      PeriodosResponseSchema.parse({
+        granularidade: g,
+        periodos,
+        padrao: limites ? periodoPadrao(g, limites.ultima, hoje()) : null,
+      }),
+    );
+  });
+
+  // Cartões de KPI: valor do período, valor do período anterior e variação.
+  app.get('/api/kpis', async (c) => {
+    const q = KpisQuerySchema.safeParse(c.req.query());
+    if (!q.success)
+      return c.json(
+        { erro: 'Parâmetros inválidos', detalhes: q.error.issues.map((i) => i.message) },
+        400,
+      );
+    const { granularidade: g, unidadeId } = q.data;
+
+    const limites = await limitesDosDados(db);
+    const periodo = q.data.periodo ?? (limites ? periodoPadrao(g, limites.ultima, hoje()) : null);
+    if (periodo !== null && !periodoValido(periodo, g))
+      return c.json({ erro: `Período "${periodo}" inválido para a granularidade ${g}` }, 400);
+    const vazio = {
+      granularidade: g,
+      periodo,
+      periodoAnterior: null,
+      unidadeId: unidadeId ?? null,
+      kpis: [],
+    };
+    if (periodo === null) return c.json(KpisResponseSchema.parse(vazio));
+
+    const unidades = await db.select().from(schema.unidade).where(eq(schema.unidade.ativa, true));
+    if (unidadeId !== undefined && !unidades.some((u) => u.id === unidadeId))
+      return c.json({ erro: `Unidade ${unidadeId} não existe ou está inativa` }, 400);
+    const [indicadoresRegra, indicadoresDb] = await Promise.all([
+      carregarIndicadores(db),
+      db.select().from(schema.indicador).orderBy(asc(schema.indicador.id)),
+    ]);
+
+    const anterior = periodoAnterior(periodo, g);
+    const medir = async (p: string): Promise<Map<string, Medida>> => {
+      const { de, ate } = limitesDoPeriodo(p, g);
+      const filtros = { granularidade: g, agrupar: 'rede' as const, de, ate, unidadeId };
+      const itens: ItemConsolidado[] = finalizarItens(await agregarSql(db, filtros), {
+        indicadores: indicadoresRegra,
+        granularidade: g,
+        hoje: hoje(),
+        de,
+        ate,
+        unidadesNaRede: unidadeId !== undefined ? 1 : unidades.length,
+      });
+      return new Map(
+        itens.map((i) => [
+          i.indicador,
+          {
+            valor: i.valor,
+            numerador: i.numerador,
+            denominador: i.denominador,
+            semanasInformadas: i.semanasInformadas,
+            semanasEsperadas: i.semanasEsperadas,
+          },
+        ]),
+      );
+    };
+    const [medidasAtuais, medidasAnteriores] = await Promise.all([medir(periodo), medir(anterior)]);
+
+    const kpis = indicadoresDb.map((ind) => {
+      const atual = medidasAtuais.get(ind.codigo) ?? null;
+      const ant = medidasAnteriores.get(ind.codigo) ?? null;
+      return {
+        indicador: ind.codigo,
+        nome: ind.nome,
+        unidadeMedida: ind.unidadeMedida,
+        tipo: ind.tipo,
+        atual,
+        anterior: ant,
+        variacao: calcularVariacao(ind.tipo, atual?.valor ?? null, ant?.valor ?? null),
+      };
+    });
+    return c.json(
+      KpisResponseSchema.parse({
+        granularidade: g,
+        periodo,
+        periodoAnterior: anterior,
+        unidadeId: unidadeId ?? null,
+        kpis,
       }),
     );
   });

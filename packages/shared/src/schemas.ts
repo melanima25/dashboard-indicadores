@@ -97,3 +97,50 @@ export const PendenciasResponseSchema = z.object({
   ),
 });
 export type PendenciasResponse = z.infer<typeof PendenciasResponseSchema>;
+
+// ---------- KPIs e períodos ----------
+export const MedidaSchema = z.object({
+  valor: z.number().nullable(),
+  numerador: z.number().nullable(),
+  denominador: z.number().nullable(),
+  semanasInformadas: z.number().int(),
+  semanasEsperadas: z.number().int(),
+});
+export type Medida = z.infer<typeof MedidaSchema>;
+
+export const KpiSchema = z.object({
+  indicador: z.string(),
+  nome: z.string(),
+  unidadeMedida: z.string(),
+  tipo: TipoIndicadorSchema,
+  atual: MedidaSchema.nullable(),
+  anterior: MedidaSchema.nullable(),
+  variacao: z.object({ tipo: z.enum(['percentual', 'pontos']), valor: z.number().nullable() }),
+});
+export type Kpi = z.infer<typeof KpiSchema>;
+
+export const KpisQuerySchema = z.object({
+  granularidade: GranularidadeSchema.default('mensal'),
+  periodo: z.string().optional(),
+  unidadeId: z.coerce.number().int().positive().optional(),
+});
+
+export const KpisResponseSchema = z.object({
+  granularidade: GranularidadeSchema,
+  periodo: z.string().nullable(),
+  periodoAnterior: z.string().nullable(),
+  unidadeId: z.number().int().nullable(),
+  kpis: z.array(KpiSchema),
+});
+export type KpisResponse = z.infer<typeof KpisResponseSchema>;
+
+export const PeriodosQuerySchema = z.object({
+  granularidade: GranularidadeSchema.default('mensal'),
+});
+export const PeriodosResponseSchema = z.object({
+  granularidade: GranularidadeSchema,
+  /** períodos com dados, do mais recente para o mais antigo */
+  periodos: z.array(z.string()),
+  padrao: z.string().nullable(),
+});
+export type PeriodosResponse = z.infer<typeof PeriodosResponseSchema>;

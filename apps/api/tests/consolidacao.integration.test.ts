@@ -9,6 +9,8 @@ import {
   type ConsolidadoResponse,
   type FiltrosConsolidacao,
   type ItemConsolidado,
+  type KpisResponse,
+  type PeriodosResponse,
   type PendenciasResponse,
 } from '@dashboard/shared';
 import { createApp } from '../src/app';
@@ -240,5 +242,95 @@ describe('GET /api/pendencias (dados do seed)', () => {
     expect(ok.body).toMatchObject({ de: '2024-02-05', ate: '2024-02-19', semanasEsperadas: 3 });
     expect((await get('/api/pendencias?de=2000-01-03&ate=2025-12-22')).status).toBe(400);
     expect((await get('/api/pendencias?de=ontem')).status).toBe(400);
+  });
+});
+
+describe('GET /api/periodos e /api/kpis', () => {
+  beforeAll(async () => {
+    await conexao.close();
+    conexao = await prepararBanco();
+    app = createApp(conexao.db, { hoje: () => hoje });
+  });
+
+  it('periodos: lista do mais recente ao mais antigo e sugere o padrão', async () => {
+    const { body } = await get<PeriodosResponse>('/api/periodos?granularidade=mensal');
+    expect(body.periodos[0]).toBe('2025-12');
+    expect(body.periodos.at(-1)).toBe('2024-01');
+    expect(body.periodos).toHaveLength(24);
+    expect(body.padrao).toBe('2025-12');
+    const anual = await get<PeriodosResponse>('/api/periodos?granularidade=anual');
+    expect(anual.body.periodos).toEqual(['2025', '2024']);
+    expect((await get('/api/periodos?granularidade=hora')).status).toBe(400);
+  });
+
+  it('kpis do período padrão trazem os 5 indicadores com atual, anterior e variação', async () => {
+    const { body } = await get<KpisResponse>('/api/kpis');
+    expect(body).toMatchObject({
+      granularidade: 'mensal',
+      periodo: '2025-12',
+      periodoAnterior: '2025-11',
+    });
+    expect(body.kpis.map((k) => k.indicador)).toEqual([
+      'atendimentos_realizados',
+      'atendimentos_agendados',
+      'faltas',
+      'tempo_medio_espera',
+      'taxa_absenteismo', // taxas vêm por último: dependem das somas
+    ]);
+    for (const k of body.kpis) {
+      expect(k.atual).not.toBeNull();
+      expect(k.anterior).not.toBeNull();
+      expect(k.variacao.valor).not.toBeNull();
+    }
+    expect(body.kpis.find((k) => k.indicador === 'taxa_absenteismo')!.variacao.tipo).toBe('pontos');
+  });
+
+  it('variação conferida à mão: faltas e taxa de março x abril/2025 (unidade 1)', async () => {
+    const db = conexao.db;
+    await db.delete(schema.lancamentoSemanal);
+    const ind = new Map((await carregarIndicadores(db)).map((i) => [i.codigo, i.id]));
+    const L = (semanaInicio: string, codigo: string, valor: number) => ({
+      unidadeId: 1,
+      semanaInicio,
+      indicadorId: ind.get(codigo)!,
+      valor: String(valor),
+    });
+    await db.insert(schema.lancamentoSemanal).values([
+      // março/2025 (quintas 06, 13, 20, 27): 10% de absenteísmo
+      L('2025-03-03', 'atendimentos_agendados', 100),
+      L('2025-03-03', 'faltas', 10),
+      // abril/2025 (a semana de 31/03 entra em abril): 15%
+      L('2025-03-31', 'atendimentos_agendados', 200),
+      L('2025-03-31', 'faltas', 30),
+    ]);
+    const { body } = await get<KpisResponse>(
+      '/api/kpis?granularidade=mensal&periodo=2025-04&unidadeId=1',
+    );
+    const k = (cod: string) => body.kpis.find((x) => x.indicador === cod)!;
+    expect(k('faltas').atual!.valor).toBe(30);
+    expect(k('faltas').anterior!.valor).toBe(10);
+    expect(k('faltas').variacao).toEqual({ tipo: 'percentual', valor: 200 });
+    expect(k('taxa_absenteismo').atual!.valor).toBeCloseTo(15, 6);
+    expect(k('taxa_absenteismo').anterior!.valor).toBeCloseTo(10, 6);
+    expect(k('taxa_absenteismo').variacao.tipo).toBe('pontos');
+    expect(k('taxa_absenteismo').variacao.valor).toBeCloseTo(5, 6);
+    // sem lançamento de espera nem realizados: o cartão existe, mas sem valor (não é zero)
+    expect(k('tempo_medio_espera').atual).toBeNull();
+    expect(k('tempo_medio_espera').variacao.valor).toBeNull();
+    expect(k('faltas').atual!.semanasEsperadas).toBe(4);
+    expect(k('faltas').atual!.semanasInformadas).toBe(1);
+  });
+
+  it('validações: período fora do formato, unidade inexistente e banco vazio', async () => {
+    expect((await get('/api/kpis?granularidade=mensal&periodo=2025-3')).status).toBe(400);
+    expect((await get('/api/kpis?periodo=2025')).status).toBe(400);
+    expect((await get('/api/kpis?unidadeId=999')).status).toBe(400);
+    await conexao.db.delete(schema.lancamentoSemanal);
+    const vazio = await get<KpisResponse>('/api/kpis');
+    expect(vazio.body).toMatchObject({ periodo: null, kpis: [] });
+    expect((await get<PeriodosResponse>('/api/periodos')).body).toMatchObject({
+      periodos: [],
+      padrao: null,
+    });
   });
 });
