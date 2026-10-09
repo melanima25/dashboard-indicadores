@@ -7,6 +7,11 @@ const EnvSchema = z.object({
     .refine((v) => /^postgres(ql)?:\/\//.test(v), 'DATABASE_URL deve começar com postgres://'),
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  // Chave que autoriza GRAVAR importações. Sem ela, a API só faz prévia (modo demo seguro).
+  ADMIN_KEY: z.preprocess(
+    (v) => (v === '' ? undefined : v),
+    z.string().min(16, 'ADMIN_KEY deve ter pelo menos 16 caracteres').optional(),
+  ),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

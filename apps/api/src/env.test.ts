@@ -16,4 +16,15 @@ describe('parseEnv', () => {
     expect(() => parseEnv({ DATABASE_URL: 'mysql://segredo' })).toThrow(/postgres:\/\//);
     expect(() => parseEnv({ DATABASE_URL: 'mysql://segredo' })).not.toThrow(/segredo/);
   });
+
+  it('ADMIN_KEY é opcional, vazia vira ausente e exige tamanho mínimo quando informada', () => {
+    const base = { DATABASE_URL: 'postgres://u:p@localhost:5432/db' };
+    expect(parseEnv(base).ADMIN_KEY).toBeUndefined();
+    expect(parseEnv({ ...base, ADMIN_KEY: '' }).ADMIN_KEY).toBeUndefined();
+    expect(parseEnv({ ...base, ADMIN_KEY: 'uma-chave-bem-longa-123' }).ADMIN_KEY).toBe(
+      'uma-chave-bem-longa-123',
+    );
+    expect(() => parseEnv({ ...base, ADMIN_KEY: 'curta' })).toThrow(/ADMIN_KEY/);
+    expect(() => parseEnv({ ...base, ADMIN_KEY: 'curta' })).not.toThrow(/curta'/);
+  });
 });

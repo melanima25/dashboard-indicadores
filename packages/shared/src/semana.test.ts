@@ -59,3 +59,25 @@ describe('auxiliares de calendário', () => {
     expect(somarDias('2024-03-01', -1)).toBe('2024-02-29');
   });
 });
+
+import { dataIsoValida, ehSegunda, nomeDoDia, segundasEntre } from './semana';
+
+describe('helpers de data (semana 2)', () => {
+  it('dataIsoValida / ehSegunda / nomeDoDia', () => {
+    expect(dataIsoValida('2025-02-29')).toBe(false);
+    expect(dataIsoValida('2024-02-29')).toBe(true);
+    expect(ehSegunda('2025-03-03')).toBe(true);
+    expect(ehSegunda('2025-03-04')).toBe(false);
+    expect(nomeDoDia('2025-03-09')).toBe('domingo');
+    expect(nomeDoDia('2025-03-08')).toBe('sábado');
+  });
+  it('segundasEntre lista de 7 em 7 dias, incluindo as pontas', () => {
+    expect(segundasEntre('2025-03-03', '2025-03-24')).toEqual([
+      '2025-03-03',
+      '2025-03-10',
+      '2025-03-17',
+      '2025-03-24',
+    ]);
+    expect(segundasEntre('2025-03-10', '2025-03-03')).toEqual([]);
+  });
+});

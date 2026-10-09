@@ -47,3 +47,51 @@ export function mesDeReferenciaDaSemana(data: string): MesReferencia {
   const quinta = parseDataIso(somarDias(segundaDaSemana(data), 3));
   return { ano: quinta.getUTCFullYear(), mes: quinta.getUTCMonth() + 1 };
 }
+
+/** true se a string é uma data real no formato AAAA-MM-DD. */
+export function dataIsoValida(data: string): boolean {
+  try {
+    parseDataIso(data);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** true se a data (AAAA-MM-DD) cai numa segunda-feira. */
+export function ehSegunda(data: string): boolean {
+  return diaDaSemanaIso(parseDataIso(data)) === 1;
+}
+
+const NOMES_DIA = ['segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado', 'domingo'] as const;
+
+/** Nome do dia da semana em português (para mensagens de erro). */
+export function nomeDoDia(data: string): string {
+  return NOMES_DIA[diaDaSemanaIso(parseDataIso(data)) - 1]!;
+}
+
+/**
+ * Uma semana está concluída quando o domingo dela já passou (hoje é segunda ou depois).
+ * Semana em andamento nunca é "pendente": ainda dá tempo de enviar.
+ */
+export function semanaConcluida(semanaInicio: string, hoje: string): boolean {
+  return somarDias(semanaInicio, 6) < hoje;
+}
+
+/** Segunda-feira da última semana concluída em relação a `hoje`. */
+export function ultimaSemanaConcluida(hoje: string): string {
+  const segundaAtual = segundaDaSemana(hoje);
+  return somarDias(segundaAtual, -7);
+}
+
+/** Todas as segundas-feiras de `de` até `ate` (inclusive); ambas devem ser segundas. */
+export function segundasEntre(de: string, ate: string): string[] {
+  const out: string[] = [];
+  for (let s = de; s <= ate; s = somarDias(s, 7)) out.push(s);
+  return out;
+}
+
+/** Quinta-feira da semana: a data que define o mês e o ano de referência. */
+export function quintaDaSemana(semanaInicio: string): string {
+  return somarDias(semanaInicio, 3);
+}
