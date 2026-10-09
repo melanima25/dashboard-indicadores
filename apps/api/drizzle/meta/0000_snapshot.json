@@ -1,0 +1,441 @@
+{
+  "id": "083ce728-838a-4235-b0d0-2a6aa362753d",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.erro_importacao": {
+      "name": "erro_importacao",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "importacao_id": {
+          "name": "importacao_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "linha": {
+          "name": "linha",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "campo": {
+          "name": "campo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mensagem": {
+          "name": "mensagem",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "erro_importacao_importacao_id_importacao_id_fk": {
+          "name": "erro_importacao_importacao_id_importacao_id_fk",
+          "tableFrom": "erro_importacao",
+          "tableTo": "importacao",
+          "columnsFrom": [
+            "importacao_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.importacao": {
+      "name": "importacao",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "arquivo_nome": {
+          "name": "arquivo_nome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unidade_id": {
+          "name": "unidade_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "semana_inicio": {
+          "name": "semana_inicio",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "enviado_em": {
+          "name": "enviado_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "linhas_ok": {
+          "name": "linhas_ok",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "linhas_erro": {
+          "name": "linhas_erro",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "status": {
+          "name": "status",
+          "type": "status_importacao",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "importacao_unidade_id_unidade_id_fk": {
+          "name": "importacao_unidade_id_unidade_id_fk",
+          "tableFrom": "importacao",
+          "tableTo": "unidade",
+          "columnsFrom": [
+            "unidade_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.indicador": {
+      "name": "indicador",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "codigo": {
+          "name": "codigo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nome": {
+          "name": "nome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unidade_medida": {
+          "name": "unidade_medida",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tipo": {
+          "name": "tipo",
+          "type": "tipo_indicador",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "numerador_id": {
+          "name": "numerador_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "denominador_id": {
+          "name": "denominador_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "indicador_numerador_id_indicador_id_fk": {
+          "name": "indicador_numerador_id_indicador_id_fk",
+          "tableFrom": "indicador",
+          "tableTo": "indicador",
+          "columnsFrom": [
+            "numerador_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "indicador_denominador_id_indicador_id_fk": {
+          "name": "indicador_denominador_id_indicador_id_fk",
+          "tableFrom": "indicador",
+          "tableTo": "indicador",
+          "columnsFrom": [
+            "denominador_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "indicador_codigo_unique": {
+          "name": "indicador_codigo_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "codigo"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "indicador_taxa_exige_num_den": {
+          "name": "indicador_taxa_exige_num_den",
+          "value": "(\"indicador\".\"tipo\" = 'taxa' AND \"indicador\".\"numerador_id\" IS NOT NULL AND \"indicador\".\"denominador_id\" IS NOT NULL)\n        OR (\"indicador\".\"tipo\" <> 'taxa' AND \"indicador\".\"numerador_id\" IS NULL AND \"indicador\".\"denominador_id\" IS NULL)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.lancamento_semanal": {
+      "name": "lancamento_semanal",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "unidade_id": {
+          "name": "unidade_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "indicador_id": {
+          "name": "indicador_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "semana_inicio": {
+          "name": "semana_inicio",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "valor": {
+          "name": "valor",
+          "type": "numeric(14, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "importacao_id": {
+          "name": "importacao_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "atualizado_em": {
+          "name": "atualizado_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "lancamento_semana_idx": {
+          "name": "lancamento_semana_idx",
+          "columns": [
+            {
+              "expression": "semana_inicio",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "lancamento_semanal_unidade_id_unidade_id_fk": {
+          "name": "lancamento_semanal_unidade_id_unidade_id_fk",
+          "tableFrom": "lancamento_semanal",
+          "tableTo": "unidade",
+          "columnsFrom": [
+            "unidade_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "lancamento_semanal_indicador_id_indicador_id_fk": {
+          "name": "lancamento_semanal_indicador_id_indicador_id_fk",
+          "tableFrom": "lancamento_semanal",
+          "tableTo": "indicador",
+          "columnsFrom": [
+            "indicador_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "lancamento_semanal_importacao_id_importacao_id_fk": {
+          "name": "lancamento_semanal_importacao_id_importacao_id_fk",
+          "tableFrom": "lancamento_semanal",
+          "tableTo": "importacao",
+          "columnsFrom": [
+            "importacao_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "lancamento_semanal_unidade_indicador_semana_uq": {
+          "name": "lancamento_semanal_unidade_indicador_semana_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "unidade_id",
+            "indicador_id",
+            "semana_inicio"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "lancamento_valor_nao_negativo": {
+          "name": "lancamento_valor_nao_negativo",
+          "value": "\"lancamento_semanal\".\"valor\" >= 0"
+        },
+        "lancamento_semana_e_segunda": {
+          "name": "lancamento_semana_e_segunda",
+          "value": "EXTRACT(ISODOW FROM \"lancamento_semanal\".\"semana_inicio\") = 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.unidade": {
+      "name": "unidade",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "nome": {
+          "name": "nome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ativa": {
+          "name": "ativa",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "unidade_nome_unique": {
+          "name": "unidade_nome_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "nome"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.status_importacao": {
+      "name": "status_importacao",
+      "schema": "public",
+      "values": [
+        "ok",
+        "parcial",
+        "rejeitada"
+      ]
+    },
+    "public.tipo_indicador": {
+      "name": "tipo_indicador",
+      "schema": "public",
+      "values": [
+        "soma",
+        "taxa",
+        "media"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
