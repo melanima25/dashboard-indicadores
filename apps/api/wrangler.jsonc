@@ -13,7 +13,7 @@
     {
       "binding": "HYPERDRIVE",
       // Troque pelo ID que o comando "wrangler hyperdrive create" mostra (veja o README, seção Deploy).
-      "id": "COLE_AQUI_O_ID_DO_HYPERDRIVE",
+      "id": "d229319354b649dd8502882c5852a7f6",
       // Banco local usado só pelo "wrangler dev" (ignorado no deploy)
       "localConnectionString": "postgres://dashboard:dashboard@localhost:5432/dashboard",
     },
