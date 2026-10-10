@@ -51,3 +51,9 @@ jobs:
         run: npm run test:integration
       - name: Build
         run: npm run build
+      - name: Instalar navegador (Playwright)
+        run: npx playwright install --with-deps chromium
+      - name: Testes ponta a ponta (Playwright + axe)
+        run: npm run test:e2e
+        env:
+         CI: true
