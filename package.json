@@ -23,7 +23,8 @@
     "db:generate": "npm run db:generate -w @dashboard/api",
     "db:migrate": "npm run db:migrate -w @dashboard/api",
     "seed": "npm run seed -w @dashboard/api",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "deploy": "npm run build -w @dashboard/web && npm run deploy -w @dashboard/api"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

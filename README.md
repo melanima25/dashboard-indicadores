@@ -4,18 +4,25 @@ Sistema que importa planilhas semanais de indicadores enviadas por várias unida
 
 > **Aviso: este projeto usa somente dados fictícios.** As unidades ("Unidade Norte", "Unidade Sul"...), os indicadores e todos os números são gerados por um script com semente fixa. Não há dados, nomes ou arquivos de nenhuma instituição, setor ou pessoa real. É um projeto de demonstração para portfólio.
 
-## Status: Semana 4 (gráficos, tabela, exportação e testes ponta a ponta)
+![Demonstração do dashboard: filtros, gráficos, tooltip e tabela](docs/demo.gif)
+
+| Desktop                                     | Celular                                  |
+| ------------------------------------------- | ---------------------------------------- |
+| ![Dashboard no desktop](docs/dashboard.png) | ![Dashboard no celular](docs/mobile.png) |
+
+## Status: Semana 5 (deploy na Cloudflare + Neon)
 
 Feito até aqui:
 
 - **Semana 1:** monorepo (npm workspaces), TypeScript strict, PostgreSQL + Drizzle, gerador de dados fictícios (`npm run seed`), API Hono e CI no GitHub Actions.
 - **Semana 2:** importação de CSV com validação linha a linha e relatório de erros, reenvio que substitui a semana, prévia sem gravar, consolidação semanal/mensal/anual em SQL e painel de pendências (ver "Regras de consolidação" e "API").
 - **Semana 3:** tela com filtros de visão (semanal, mensal, anual), período e unidade; cartões de KPI com variação em relação ao período anterior e indicação de cobertura; painel de pendências. Rotas `/api/kpis` e `/api/periodos`.
+- **Semana 5:** a API roda também em Cloudflare Workers (mesmo código, só uma entrada nova) servindo a tela e a API juntas, com Postgres no Neon via Hyperdrive. A demo pública só faz prévia de importação. Ver "Deploy".
 - **Semana 4:** filtro de indicador; gráfico de linha (evolução) e de barras (comparação entre unidades), ambos com tooltip, teclado e tabela equivalente; tabela consolidada com exportação CSV; painel de importação (prévia, relatório de erros por linha e gravação); testes ponta a ponta com Playwright e checagem de acessibilidade com axe.
 
 Próximos passos:
 
-1. Deploy, screenshots e GIF (Semana 5).
+1. Publicar o link da demo aqui e no portfólio; depois, o próximo projeto do roadmap (CRM de advocacia fictício).
 
 ## Como rodar localmente (Windows com Docker Desktop)
 
@@ -134,7 +141,7 @@ Use `curl.exe` (e não `curl`): no PowerShell, `curl` é um apelido de outro com
 ## Estrutura
 
 ```
-apps/api/            API Hono + Drizzle
+apps/api/            API Hono + Drizzle (src/index.ts: Node; src/worker.ts: Cloudflare; wrangler.jsonc)
   src/db/schema.ts     tabelas
   src/db/client.ts     único arquivo que conhece o driver do Postgres
   src/db/seed-data.ts  gerador sintético (puro, com semente fixa)
@@ -143,11 +150,36 @@ apps/api/            API Hono + Drizzle
   src/consolidacao/    consultas SQL de consolidação
   tests/               testes de integração (Postgres real)
 apps/web/            React + Vite + Tailwind + TanStack Query (src/components, src/components/graficos, src/format.ts)
+docs/                imagens do README
 e2e/                 testes ponta a ponta (Playwright + axe)
 packages/shared/     schemas Zod, validação de CSV e regras de consolidação (funções puras)
 exemplos/            CSVs de exemplo para testar a importação
 .github/workflows/   CI
 ```
+
+## Deploy (Cloudflare Workers + Neon)
+
+Um único Worker entrega a tela (arquivos estáticos de `apps/web/dist`) e a API (`/api/*`). O banco é um Postgres no Neon, acessado pelo Hyperdrive (pool de conexões da Cloudflare). O app Hono é o mesmo do servidor local: `apps/api/src/worker.ts` só monta a conexão e entrega as requisições.
+
+1. Crie um projeto no [Neon](https://neon.tech) e copie a connection string (host sem `-pooler`).
+2. Crie as tabelas e os dados fictícios nesse banco:
+
+```powershell
+$env:DATABASE_URL="COLE_A_CONNECTION_STRING_AQUI"
+npm run db:migrate
+npm run seed
+Remove-Item Env:DATABASE_URL
+```
+
+3. Na Cloudflare: `npx wrangler login`, depois crie o Hyperdrive e copie o `id` que ele mostra para `apps/api/wrangler.jsonc`:
+
+```powershell
+npx wrangler hyperdrive create dashboard-neon --connection-string="COLE_A_CONNECTION_STRING_AQUI"
+```
+
+4. Publique: `npm run deploy`. O endereço sai no final (`https://dashboard-indicadores.<sua-conta>.workers.dev`).
+
+Sem `ADMIN_KEY` configurada, a demo só aceita prévia de importação: gravar responde 403. Para testar o Worker localmente: `npm run cf:dev -w @dashboard/api` (usa o banco local pelo Hyperdrive local; defina `CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE` se o seu banco não for o do `docker compose`).
 
 ## Gráficos
 
@@ -171,6 +203,8 @@ O botão "Exportar CSV" baixa a tabela como está na tela (mesmo período e indi
 - **Tempo médio de espera:** tipo `media` (acrescentado ao modelo original, que previa só `soma` e `taxa`). Consolidado por média simples; ver a limitação em "Regras de consolidação".
 - **Semana sem envio não é zero:** no seed, algumas semanas ficam sem lançamentos de propósito, e o painel de pendências lista exatamente essas.
 - **Gravar exige chave:** a demo pública só faz prévia; o `ADMIN_KEY` é comparado em tempo constante e nunca vai para o repositório.
+- **Um Worker só para tela e API:** mesma origem (sem CORS), um deploy e um endereço. `run_worker_first` manda só `/api/*` para o código; o resto é arquivo estático.
+- **Hyperdrive + `pg` em vez de driver serverless:** o código de acesso ao banco continua o mesmo do local e do CI (inclusive transações e `pg_advisory_xact_lock` da importação), validado rodando o Worker de verdade.
 - **Gráficos em SVG próprio:** são só dois tipos, e assim o desenho, a acessibilidade e o tooltip ficam sob controle e testáveis, sem uma dependência a mais.
 - **O banco protege os dados:** `UNIQUE (unidade, indicador, semana)`, valor não negativo e semana sempre começando na segunda-feira são `CHECK`s no próprio Postgres.
 

@@ -12,7 +12,9 @@
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx --env-file-if-exists=../../.env src/db/migrate.ts",
-    "seed": "tsx --env-file-if-exists=../../.env src/db/seed.ts"
+    "seed": "tsx --env-file-if-exists=../../.env src/db/seed.ts",
+    "cf:dev": "wrangler dev",
+    "deploy": "wrangler deploy"
   },
   "dependencies": {
     "@dashboard/shared": "^0.1.0",
@@ -27,6 +29,7 @@
     "@types/pg": "^8.23.1",
     "drizzle-kit": "^0.31.11",
     "tsup": "^8.5.1",
-    "tsx": "^4.23.15"
+    "tsx": "^4.23.15",
+    "wrangler": "^4.149.0"
   }
 }

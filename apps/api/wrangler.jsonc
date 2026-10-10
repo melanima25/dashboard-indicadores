@@ -1,0 +1,21 @@
+{
+  // Demo pública: um único Worker serve a API (/api/*) e a tela (arquivos estáticos de apps/web/dist).
+  "name": "dashboard-indicadores",
+  "main": "src/worker.ts",
+  "compatibility_date": "2025-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "../web/dist",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"],
+  },
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      // Troque pelo ID que o comando "wrangler hyperdrive create" mostra (veja o README, seção Deploy).
+      "id": "COLE_AQUI_O_ID_DO_HYPERDRIVE",
+      // Banco local usado só pelo "wrangler dev" (ignorado no deploy)
+      "localConnectionString": "postgres://dashboard:dashboard@localhost:5432/dashboard",
+    },
+  ],
+}
