@@ -71,3 +71,25 @@ export function textoCobertura(informadas: number, esperadas: number): string {
 
 export const coberturaCompleta = (informadas: number, esperadas: number) =>
   esperadas > 0 && informadas >= esperadas;
+
+/** Rótulo curto para eixo: mar/25, 17/03 (semana) ou 2025. */
+export function rotuloCurto(periodo: string, g: Granularidade): string {
+  if (g === 'anual') return periodo;
+  if (g === 'mensal') {
+    const [ano, mes] = periodo.split('-');
+    return `${MESES[Number(mes) - 1]}/${(ano ?? '').slice(2)}`;
+  }
+  const [, m, d] = periodo.split('-');
+  return `${d}/${m}`;
+}
+
+/** Valor de eixo, compacto: 1,2 mil; 12%; 8 min. */
+export function formatarEixo(valor: number, unidadeMedida: string): string {
+  if (unidadeMedida === '%')
+    return `${new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 }).format(valor)}%`;
+  if (unidadeMedida === 'minutos')
+    return `${new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 }).format(valor)} min`;
+  return new Intl.NumberFormat('pt-BR', { notation: 'compact', maximumFractionDigits: 1 }).format(
+    valor,
+  );
+}

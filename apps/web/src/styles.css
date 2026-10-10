@@ -10,6 +10,11 @@
   --color-accent: #3ddc97;
   --color-accent-contrast: #0b0f14;
   --color-warn: #f5a97f;
+  /* gráficos: slot 1 da paleta categórica (passo escuro, validado contra a superfície #121821) */
+  --color-viz-1: #3987e5;
+  --color-viz-mudo: #5d6b7b; /* de-ênfase: barras que não são a unidade escolhida */
+  --color-viz-grade: #1e2733; /* linhas de grade: fio de 1px, uma gradação acima da superfície */
+  --color-viz-eixo: #3a4656;
 }
 
 html {

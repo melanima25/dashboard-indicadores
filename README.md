@@ -4,18 +4,18 @@ Sistema que importa planilhas semanais de indicadores enviadas por várias unida
 
 > **Aviso: este projeto usa somente dados fictícios.** As unidades ("Unidade Norte", "Unidade Sul"...), os indicadores e todos os números são gerados por um script com semente fixa. Não há dados, nomes ou arquivos de nenhuma instituição, setor ou pessoa real. É um projeto de demonstração para portfólio.
 
-## Status: Semana 3 (tela com filtros, KPIs e pendências)
+## Status: Semana 4 (gráficos, tabela, exportação e testes ponta a ponta)
 
 Feito até aqui:
 
 - **Semana 1:** monorepo (npm workspaces), TypeScript strict, PostgreSQL + Drizzle, gerador de dados fictícios (`npm run seed`), API Hono e CI no GitHub Actions.
 - **Semana 2:** importação de CSV com validação linha a linha e relatório de erros, reenvio que substitui a semana, prévia sem gravar, consolidação semanal/mensal/anual em SQL e painel de pendências (ver "Regras de consolidação" e "API").
 - **Semana 3:** tela com filtros de visão (semanal, mensal, anual), período e unidade; cartões de KPI com variação em relação ao período anterior e indicação de cobertura; painel de pendências. Rotas `/api/kpis` e `/api/periodos`.
+- **Semana 4:** filtro de indicador; gráfico de linha (evolução) e de barras (comparação entre unidades), ambos com tooltip, teclado e tabela equivalente; tabela consolidada com exportação CSV; painel de importação (prévia, relatório de erros por linha e gravação); testes ponta a ponta com Playwright e checagem de acessibilidade com axe.
 
 Próximos passos:
 
-1. Gráficos (no máximo 3 tipos), tabela consolidada, filtro de indicador, exportação CSV e testes ponta a ponta (Semana 4).
-2. Deploy, screenshots e GIF (Semana 5).
+1. Deploy, screenshots e GIF (Semana 5).
 
 ## Como rodar localmente (Windows com Docker Desktop)
 
@@ -36,6 +36,17 @@ npm run dev                           # API em :3000 e web em :5173
 Abra <http://localhost:5173>. A API responde em <http://localhost:3000/api/health>.
 
 Outros comandos: `npm run lint`, `npm run typecheck`, `npm test` (unitários), `npm run test:integration` (precisa de um banco de teste; veja abaixo), `npm run build`.
+
+### Testes ponta a ponta (Playwright)
+
+Abrem um navegador de verdade (Chromium) contra a tela, a API e o Postgres. Antes de rodar, o teste recria as tabelas e repõe os dados fictícios, e um dos testes **grava uma importação**; por isso não aponte para um banco com dados que você queira manter.
+
+```powershell
+npx playwright install chromium     # só na primeira vez (baixa o navegador)
+npm run test:e2e
+```
+
+O que é verificado: KPIs, gráficos e tabela aparecem; o filtro de indicador muda tudo; a exportação gera o CSV esperado; o fluxo "arquivo com erro, relatório com a linha, correção, gravação e tela atualizada"; chave errada é recusada; nenhuma violação de acessibilidade (axe, WCAG A/AA); sem rolagem horizontal no celular.
 
 ### Testes de integração
 
@@ -131,11 +142,25 @@ apps/api/            API Hono + Drizzle
   src/importacao/      leitura do arquivo e gravação da importação
   src/consolidacao/    consultas SQL de consolidação
   tests/               testes de integração (Postgres real)
-apps/web/            React + Vite + Tailwind + TanStack Query (src/components, src/format.ts)
+apps/web/            React + Vite + Tailwind + TanStack Query (src/components, src/components/graficos, src/format.ts)
+e2e/                 testes ponta a ponta (Playwright + axe)
 packages/shared/     schemas Zod, validação de CSV e regras de consolidação (funções puras)
 exemplos/            CSVs de exemplo para testar a importação
 .github/workflows/   CI
 ```
+
+## Gráficos
+
+Dois tipos, escolhidos pelo trabalho que cada um faz:
+
+- **Linha:** evolução de um indicador no tempo (12 semanas, 12 meses ou 5 anos até o período escolhido). Período sem envio **quebra a linha**; não vira zero.
+- **Barras horizontais:** comparação entre unidades no período. Com uma unidade escolhida no filtro, ela fica colorida e as demais em cinza (ênfase).
+
+Regras aplicadas: uma série por gráfico (sem legenda, o título diz o que é), traço de 2 px, barras finas com base no zero, grade em fio de 1 px, valor só na ponta, cursor que acompanha o período, tooltip, setas do teclado no gráfico de linha e uma tabela equivalente em cada gráfico ("Ver dados do gráfico em tabela"). A cor (azul, slot 1 da paleta categórica no passo escuro) foi validada contra a superfície do tema escuro. Os gráficos são SVG escrito à mão (a matemática de escala é pura e testada em `components/graficos/escala.ts`), sem biblioteca de gráficos.
+
+## Exportação CSV
+
+O botão "Exportar CSV" baixa a tabela como está na tela (mesmo período e indicador): separador `;`, BOM e fim de linha CRLF, para abrir direto no Excel brasileiro. Textos que começam com `=`, `+`, `-` ou `@` recebem um apóstrofo na frente para a planilha não executá-los como fórmula.
 
 ## Decisões
 
@@ -146,6 +171,7 @@ exemplos/            CSVs de exemplo para testar a importação
 - **Tempo médio de espera:** tipo `media` (acrescentado ao modelo original, que previa só `soma` e `taxa`). Consolidado por média simples; ver a limitação em "Regras de consolidação".
 - **Semana sem envio não é zero:** no seed, algumas semanas ficam sem lançamentos de propósito, e o painel de pendências lista exatamente essas.
 - **Gravar exige chave:** a demo pública só faz prévia; o `ADMIN_KEY` é comparado em tempo constante e nunca vai para o repositório.
+- **Gráficos em SVG próprio:** são só dois tipos, e assim o desenho, a acessibilidade e o tooltip ficam sob controle e testáveis, sem uma dependência a mais.
 - **O banco protege os dados:** `UNIQUE (unidade, indicador, semana)`, valor não negativo e semana sempre começando na segunda-feira são `CHECK`s no próprio Postgres.
 
 ## Uso de IA no desenvolvimento

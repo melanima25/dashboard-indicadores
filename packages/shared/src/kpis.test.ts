@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   calcularVariacao,
+  campoCsv,
+  janelaDeTendencia,
   limitesDoPeriodo,
+  montarCsv,
   periodoAnterior,
   periodoPadrao,
   periodoValido,
@@ -73,5 +76,37 @@ describe('calcularVariacao', () => {
     expect(calcularVariacao('soma', null, 10).valor).toBeNull();
     expect(calcularVariacao('soma', 10, 0).valor).toBeNull();
     expect(calcularVariacao('taxa', 10, 0).valor).toBe(10); // 0% -> 10% é +10 p.p., válido
+  });
+});
+
+describe('janelaDeTendencia', () => {
+  it('mensal: 12 meses terminando no período, virando o ano', () => {
+    expect(janelaDeTendencia('2025-03', 'mensal')).toEqual({ de: '2024-04-01', ate: '2025-03-31' });
+  });
+  it('semanal: 12 semanas em quintas-feiras', () => {
+    expect(janelaDeTendencia('2025-03-17', 'semanal', 2)).toEqual({
+      de: '2025-03-13',
+      ate: '2025-03-20',
+    });
+  });
+  it('anual: 5 anos', () => {
+    expect(janelaDeTendencia('2025', 'anual')).toEqual({ de: '2021-01-01', ate: '2025-12-31' });
+  });
+});
+
+describe('CSV de exportação', () => {
+  it('escapa aspas, separador e quebra de linha', () => {
+    expect(campoCsv('a;b')).toBe('"a;b"');
+    expect(campoCsv('diz "oi"')).toBe('"diz ""oi"""');
+    expect(campoCsv(null)).toBe('');
+    expect(campoCsv(12.5)).toBe('12.5');
+  });
+  it('neutraliza injeção de fórmula em texto', () => {
+    expect(campoCsv('=1+1')).toBe("'=1+1");
+    expect(campoCsv('@cmd')).toBe("'@cmd");
+    expect(campoCsv(-3)).toBe('-3'); // número negativo é número, não fórmula
+  });
+  it('monta com BOM, ; e CRLF', () => {
+    expect(montarCsv(['a', 'b'], [[1, 'x']])).toBe('﻿a;b\r\n1;x\r\n');
   });
 });

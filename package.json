@@ -22,10 +22,13 @@
     "test:integration": "npm run test:integration -w @dashboard/api",
     "db:generate": "npm run db:generate -w @dashboard/api",
     "db:migrate": "npm run db:migrate -w @dashboard/api",
-    "seed": "npm run seed -w @dashboard/api"
+    "seed": "npm run seed -w @dashboard/api",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@eslint/js": "^9.39.5",
+    "@playwright/test": "1.56.0",
     "concurrently": "^10.0.6",
     "eslint": "^9.39.5",
     "eslint-config-prettier": "^10.1.8",

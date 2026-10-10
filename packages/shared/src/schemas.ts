@@ -63,6 +63,7 @@ export const IndicadorSchema = z.object({
   tipo: TipoIndicadorSchema,
 });
 export const IndicadoresResponseSchema = z.object({ indicadores: z.array(IndicadorSchema) });
+export type Indicador = z.infer<typeof IndicadorSchema>;
 
 export const ItemConsolidadoSchema = z.object({
   periodo: z.string(),

@@ -1,4 +1,4 @@
-import type { Granularidade, PeriodosResponse, Unidade } from '@dashboard/shared';
+import type { Granularidade, Indicador, PeriodosResponse, Unidade } from '@dashboard/shared';
 import { rotuloPeriodo } from '../format';
 
 const GRANULARIDADES: { valor: Granularidade; rotulo: string }[] = [
@@ -16,6 +16,9 @@ type Props = {
   unidades: Unidade[] | undefined;
   unidadeId: number | null;
   onUnidade: (id: number | null) => void;
+  indicadores: Indicador[] | undefined;
+  indicador: string | null;
+  onIndicador: (codigo: string) => void;
 };
 
 const campo =
@@ -25,7 +28,7 @@ export function Filtros(p: Props) {
   return (
     <section
       aria-label="Filtros"
-      className="grid gap-4 rounded-lg border border-border bg-surface p-5 sm:grid-cols-3"
+      className="grid gap-4 rounded-lg border border-border bg-surface p-5 sm:grid-cols-2 lg:grid-cols-4"
     >
       <div>
         <label htmlFor="f-granularidade" className="mb-1 block text-sm text-text-muted">
@@ -79,6 +82,25 @@ export function Filtros(p: Props) {
           {(p.unidades ?? []).map((u) => (
             <option key={u.id} value={u.id}>
               {u.nome}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label htmlFor="f-indicador" className="mb-1 block text-sm text-text-muted">
+          Indicador (gráficos e tabela)
+        </label>
+        <select
+          id="f-indicador"
+          className={campo}
+          value={p.indicador ?? ''}
+          disabled={!p.indicadores}
+          onChange={(e) => p.onIndicador(e.target.value)}
+        >
+          {(p.indicadores ?? []).map((i) => (
+            <option key={i.codigo} value={i.codigo}>
+              {i.nome}
             </option>
           ))}
         </select>

@@ -73,3 +73,38 @@ export function calcularVariacao(
   if (anterior === 0) return { tipo: modo, valor: null };
   return { tipo: modo, valor: ((atual - anterior) / anterior) * 100 };
 }
+
+/** Quantos períodos o gráfico de evolução mostra, por visão. */
+export const JANELA_TENDENCIA: Record<Granularidade, number> = {
+  semanal: 12,
+  mensal: 12,
+  anual: 5,
+};
+
+/**
+ * Janela do gráfico de evolução: os `n` períodos que terminam em `periodo` (inclusive),
+ * em datas de quinta-feira, como os filtros `de`/`ate` da API.
+ */
+export function janelaDeTendencia(
+  periodo: string,
+  g: Granularidade,
+  n: number = JANELA_TENDENCIA[g],
+): { de: string; ate: string } {
+  let inicial = periodo;
+  for (let i = 1; i < n; i++) inicial = periodoAnterior(inicial, g);
+  return { de: limitesDoPeriodo(inicial, g).de, ate: limitesDoPeriodo(periodo, g).ate };
+}
+
+/** Escapa um campo de CSV; neutraliza fórmulas (=, +, -, @) para planilhas não executarem o texto. */
+export function campoCsv(valor: string | number | null): string {
+  if (valor === null) return '';
+  let texto = String(valor);
+  if (typeof valor === 'string' && /^[=+\-@\t\r]/.test(texto)) texto = `'${texto}`;
+  return /[";\n\r]/.test(texto) ? `"${texto.replace(/"/g, '""')}"` : texto;
+}
+
+/** Monta CSV (separador `;`, BOM e CRLF: abre certo no Excel brasileiro). */
+export function montarCsv(cabecalho: string[], linhas: (string | number | null)[][]): string {
+  const todas = [cabecalho, ...linhas].map((l) => l.map(campoCsv).join(';'));
+  return '﻿' + todas.join('\r\n') + '\r\n';
+}
