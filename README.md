@@ -4,6 +4,8 @@ Sistema que importa planilhas semanais de indicadores enviadas por várias unida
 
 > **Aviso: este projeto usa somente dados fictícios.** As unidades ("Unidade Norte", "Unidade Sul"...), os indicadores e todos os números são gerados por um script com semente fixa. Não há dados, nomes ou arquivos de nenhuma instituição, setor ou pessoa real. É um projeto de demonstração para portfólio.
 
+**Demo online:** https://dashboard-indicadores.brenojf19.workers.dev/ (dados fictícios; a demo só faz prévia de importação, não grava)
+
 ![Demonstração do dashboard: filtros, gráficos, tooltip e tabela](docs/demo.gif)
 
 | Desktop                                     | Celular                                  |
