@@ -12,19 +12,17 @@ Sistema que importa planilhas semanais de indicadores enviadas por várias unida
 | ------------------------------------------- | ---------------------------------------- |
 | ![Dashboard no desktop](docs/dashboard.png) | ![Dashboard no celular](docs/mobile.png) |
 
-## Status: Semana 5 (deploy na Cloudflare + Neon)
+## Status: concluído (demo publicada)
 
-Feito até aqui:
+Entregas por semana:
 
 - **Semana 1:** monorepo (npm workspaces), TypeScript strict, PostgreSQL + Drizzle, gerador de dados fictícios (`npm run seed`), API Hono e CI no GitHub Actions.
 - **Semana 2:** importação de CSV com validação linha a linha e relatório de erros, reenvio que substitui a semana, prévia sem gravar, consolidação semanal/mensal/anual em SQL e painel de pendências (ver "Regras de consolidação" e "API").
 - **Semana 3:** tela com filtros de visão (semanal, mensal, anual), período e unidade; cartões de KPI com variação em relação ao período anterior e indicação de cobertura; painel de pendências. Rotas `/api/kpis` e `/api/periodos`.
-- **Semana 5:** a API roda também em Cloudflare Workers (mesmo código, só uma entrada nova) servindo a tela e a API juntas, com Postgres no Neon via Hyperdrive. A demo pública só faz prévia de importação. Ver "Deploy".
 - **Semana 4:** filtro de indicador; gráfico de linha (evolução) e de barras (comparação entre unidades), ambos com tooltip, teclado e tabela equivalente; tabela consolidada com exportação CSV; painel de importação (prévia, relatório de erros por linha e gravação); testes ponta a ponta com Playwright e checagem de acessibilidade com axe.
+- **Semana 5:** a API roda também em Cloudflare Workers (mesmo código, só uma entrada nova) servindo a tela e a API juntas, com Postgres no Neon via Hyperdrive. A demo pública só faz prévia de importação. Ver "Deploy".
 
-Próximos passos:
-
-1. Publicar o link da demo aqui e no portfólio; depois, o próximo projeto do roadmap (CRM de advocacia fictício).
+Situação: projeto concluído. A demo está publicada e listada no [portfólio](https://portifolio.brenojf19.workers.dev/). O projeto seguinte foi o [CRM de advocacia fictício](https://github.com/melanima25/crm-advocacia), também com demo online.
 
 ## Como rodar localmente (Windows com Docker Desktop)
 
