@@ -1,5 +1,7 @@
 # Dashboard de indicadores
 
+[![CI](https://github.com/melanima25/dashboard-indicadores/actions/workflows/ci.yml/badge.svg)](https://github.com/melanima25/dashboard-indicadores/actions/workflows/ci.yml)
+
 Sistema que importa planilhas semanais de indicadores enviadas por várias unidades de atendimento, valida, consolida em visões mensais e anuais e mostra o resultado em um dashboard.
 
 > **Aviso: este projeto usa somente dados fictícios.** As unidades ("Unidade Norte", "Unidade Sul"...), os indicadores e todos os números são gerados por um script com semente fixa. Não há dados, nomes ou arquivos de nenhuma instituição, setor ou pessoa real. É um projeto de demonstração para portfólio.
