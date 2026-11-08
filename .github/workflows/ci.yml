@@ -14,7 +14,8 @@ concurrency:
 
 jobs:
   verificar:
-    runs-on: ubuntu-latest
+    # Fixado: o Playwright 1.56 não instala o Chromium no Ubuntu 26.04, para onde o ubuntu-latest migrou.
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     services:
       postgres:
